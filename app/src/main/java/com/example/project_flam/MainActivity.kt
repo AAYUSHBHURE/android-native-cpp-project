@@ -16,7 +16,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Example of a call to a native method
-        binding.sampleText.text = stringFromJNI()
+        val nativeMessage = stringFromJNI()
+        val openCVVersion = getOpenCVVersion()
+        val matTest = testOpenCVMat()
+        
+        binding.sampleText.text = "$nativeMessage\n$openCVVersion\nMat Test Result: $matTest"
     }
 
     /**
@@ -24,6 +28,16 @@ class MainActivity : AppCompatActivity() {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
+    
+    /**
+     * Native method to get OpenCV version
+     */
+    external fun getOpenCVVersion(): String
+    
+    /**
+     * Native method to test OpenCV Mat creation
+     */
+    external fun testOpenCVMat(): Int
 
     companion object {
         // Used to load the 'project_flam' library on application startup.
