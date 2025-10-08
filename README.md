@@ -1,6 +1,5 @@
-# 🎉 Repository Ready!
 
-Your GitHub repository has been successfully created:
+
 - **Repository**: AAYUSHBHURE/android-native-cpp-project
 - **URL**: https://github.com/AAYUSHBHURE/android-native-cpp-project
 - **Local Path**: C:\Users\bhure\FLAM\android-native-cpp-project
