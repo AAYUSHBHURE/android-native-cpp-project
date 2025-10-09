@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLAM Web Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            max-width: 800px;
+            width: 100%;
+        }
+        #frame {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            display: block;
+            margin: 0 auto 20px;
+        }
+        #stats {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #a78bfa;
+        }
+        .stat-value {
+            color: #fbbf24;
+        }
+        .placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            border: 2px dashed rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 FLAM Web Viewer</h1>
+    <p class="subtitle">Real-time Camera Processing Dashboard</p>
+    
+    <div class="container">
+        <img id="frame" src="frame.jpg" alt="Processed Camera Frame" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';">
+        <div id="placeholder" class="placeholder" style="display:none;">
+            <p>📷 No frame captured yet</p>
+            <p style="font-size: 12px; opacity: 0.7;">Run the Android app and save a frame to display here</p>
+        </div>
+        
+        <div id="stats">
+            <div class="stat-row">
+                <span class="stat-label">FPS:</span>
+                <span class="stat-value" id="fps">--</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Resolution:</span>
+                <span class="stat-value" id="resolution">--</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Processing Mode:</span>
+                <span class="stat-value" id="mode">--</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">OpenCV Version:</span>
+                <span class="stat-value" id="opencv-version">--</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Last Updated:</span>
+                <span class="stat-value" id="timestamp">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="dist/main.js"></script>
+</body>
+</html>

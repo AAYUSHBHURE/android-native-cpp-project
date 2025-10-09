@@ -37,3 +37,31 @@ Java_com_example_project_1flam_MainActivity_testOpenCVMat(
         return -1;
     }
 }
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_example_project_1flam_MainActivity_processFrame(
+        JNIEnv* env,
+        jobject /* this */,
+        jboolean enableEdgeDetection) {
+    try {
+        // Placeholder for actual frame processing
+        // In a real implementation, you would:
+        // 1. Get the camera frame data
+        // 2. Convert to cv::Mat
+        // 3. Apply processing based on enableEdgeDetection flag
+        // 4. Return the processed frame
+        
+        if (enableEdgeDetection) {
+            LOGD("Edge detection mode enabled - would apply Canny filter");
+            // Example: cv::Canny(inputFrame, outputFrame, 50, 150);
+        } else {
+            LOGD("Raw camera mode - passthrough frame");
+            // Just return the raw frame
+        }
+        
+        return 0; // Success
+    } catch (const std::exception& e) {
+        LOGD("Frame processing failed: %s", e.what());
+        return -1;
+    }
+}
