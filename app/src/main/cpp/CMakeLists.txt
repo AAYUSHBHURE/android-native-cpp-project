@@ -11,8 +11,11 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("project_flam")
 
-# Set OpenCV path
-set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/../../../opencv/native/jni)
+# Set OpenCV path; can be overridden by -DOpenCV_DIR from Gradle
+if(NOT DEFINED OpenCV_DIR)
+        get_filename_component(ROOT_DIR "${CMAKE_SOURCE_DIR}/../../.." ABSOLUTE)
+        set(OpenCV_DIR "${ROOT_DIR}/opencv/native/jni")
+endif()
 
 # Find OpenCV package
 find_package(OpenCV REQUIRED)
