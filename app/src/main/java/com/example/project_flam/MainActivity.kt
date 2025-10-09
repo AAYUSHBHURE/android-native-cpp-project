@@ -1,12 +1,17 @@
 package com.example.project_flam
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
+import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.Surface
@@ -16,6 +21,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.project_flam.databinding.ActivityMainBinding
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,11 +41,15 @@ class MainActivity : AppCompatActivity() {
     private var backgroundThread: HandlerThread? = null
     private var backgroundHandler: Handler? = null
     
-    // Constants
-    private companion object {
-        const val CAMERA_PERMISSION_REQUEST_CODE = 100
-        const val TAG = "MainActivity"
-    }
+    // FPS tracking
+    private var frameCount = 0
+    private var lastFpsUpdateTime = System.currentTimeMillis()
+    private var currentFps = 0.0
+    
+    // Edge detection toggle
+    private var edgeDetectionEnabled = false
+    
+    // Constants are defined in the single companion object at the bottom
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +66,18 @@ class MainActivity : AppCompatActivity() {
         val matTest = testOpenCVMat()
         
         binding.sampleText.text = "OpenCV: $openCVVersion | Mat Test: $matTest"
+
+        // Set up toggle for edge detection
+        binding.edgeDetectionToggle.setOnCheckedChangeListener { _, isChecked ->
+            edgeDetectionEnabled = isChecked
+            binding.sampleText.text = "Mode: ${if (isChecked) "Edge Detection" else "Raw Camera"} | OpenCV: $openCVVersion"
+            Log.d(TAG, "Edge detection ${if (isChecked) "enabled" else "disabled"}")
+        }
+
+        // Set up save frame button
+        binding.saveFrameButton.setOnClickListener {
+            saveCurrentFrame()
+        }
 
         // Set up camera preview
         setupCamera()
@@ -114,6 +138,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
                 // Called when the SurfaceTexture is updated - camera frames are ready here
+                updateFPS()
             }
         }
     }
@@ -268,6 +293,75 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    private fun updateFPS() {
+        frameCount++
+        val currentTime = System.currentTimeMillis()
+        val elapsedTime = currentTime - lastFpsUpdateTime
+        
+        // Update FPS every second
+        if (elapsedTime >= 1000) {
+            currentFps = (frameCount * 1000.0) / elapsedTime
+            frameCount = 0
+            lastFpsUpdateTime = currentTime
+            
+            runOnUiThread {
+                binding.fpsCounter.text = String.format("FPS: %.1f", currentFps)
+            }
+        }
+    }
+
+    private fun saveCurrentFrame() {
+        val bitmap = textureView.bitmap ?: run {
+            Toast.makeText(this, "No frame available to save", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            // Save to Pictures directory
+            val fileName = "frame_${System.currentTimeMillis()}.jpg"
+            val savedFile: File?
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Use MediaStore for Android 10+
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                }
+
+                val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                uri?.let {
+                    val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                    outputStream?.use { stream ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                    }
+                    Toast.makeText(this, "Frame saved: $fileName", Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, "Frame saved to Pictures: $fileName")
+                }
+            } else {
+                // Legacy approach for older Android versions
+                val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                savedFile = File(picturesDir, fileName)
+                FileOutputStream(savedFile).use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                }
+                Toast.makeText(this, "Frame saved: ${savedFile.absolutePath}", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "Frame saved: ${savedFile.absolutePath}")
+            }
+
+            // Also save a copy as "frame.jpg" for web viewer
+            val webFrameFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "frame.jpg")
+            FileOutputStream(webFrameFile).use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+            }
+            Log.d(TAG, "Web viewer frame saved: ${webFrameFile.absolutePath}")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving frame: ${e.message}")
+            Toast.makeText(this, "Error saving frame: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     /**
      * A native method that is implemented by the 'project_flam' native library,
      * which is packaged with this application.
@@ -284,7 +378,17 @@ class MainActivity : AppCompatActivity() {
      */
     external fun testOpenCVMat(): Int
 
+    /**
+     * Native method to process frame with edge detection
+     * @param enableEdgeDetection true to apply Canny edge detection, false for raw frame
+     * @return processed frame data (placeholder for future implementation)
+     */
+    external fun processFrame(enableEdgeDetection: Boolean): Int
+
     companion object {
+        const val CAMERA_PERMISSION_REQUEST_CODE = 100
+        const val TAG = "MainActivity"
+
         // Used to load the 'project_flam' library on application startup.
         init {
             System.loadLibrary("project_flam")
