@@ -89,7 +89,6 @@
 //
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 
 def openCVersionName = "4.8.0"
 def openCVersionCode = ((4 * 100 + 8) * 100 + 0) * 10 + 0
@@ -97,12 +96,15 @@ def openCVersionCode = ((4 * 100 + 8) * 100 + 0) * 10 + 0
 println "OpenCV: " +openCVersionName + " " + project.buildscript.sourceFile
 
 android {
-    
-    compileSdkVersion 26
+    // Required by AGP 8+: do not infer from manifest, set explicitly
+    namespace = "org.opencv"
+
+    // Align with app module / modern SDKs
+    compileSdk = 36
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 26
+        minSdk = 24
+        targetSdk = 36
 
         versionCode openCVersionCode
         versionName openCVersionName
@@ -116,24 +118,33 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
-    
+    // Generate BuildConfig.java for this library (disabled by default in AGP 8+)
+    buildFeatures {
+        buildConfig = true
+        aidl = true
+    }
+
+    // No Kotlin in this module; avoid applying kotlin-android to prevent compiler issues in OpenCV Kotlin samples
+
+    // Configure packaging for JNI libs (replacement for deprecated doNotStrip/location)
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 
     buildTypes {
         debug {
-            packagingOptions {
-                doNotStrip '**/*.so'  // controlled by OpenCV CMake scripts
-            }
+            // No special config needed; packaging is set above
         }
         release {
-            packagingOptions {
-                doNotStrip '**/*.so'  // controlled by OpenCV CMake scripts
-            }
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            // Library consumer rules
+            consumerProguardFiles 'proguard-rules.txt'
         }
     }
 

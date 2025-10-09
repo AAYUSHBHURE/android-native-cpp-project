@@ -18,10 +18,13 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
+                // Point to the OpenCV module bundled in this repository
+                val openCvDir = file("${rootProject.projectDir}/opencv/native/jni").path.replace('\\', '/')
+                arguments += listOf("-DOpenCV_DIR=$openCvDir")
             }
         }
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
     }
 
@@ -49,6 +52,12 @@ android {
     }
     buildFeatures {
         viewBinding = true
+    }
+    buildToolsVersion = "36.1.0"
+    ndkVersion = "27.0.12077973"
+    dependenciesInfo {
+        includeInApk = true
+        includeInBundle = true
     }
 }
 
